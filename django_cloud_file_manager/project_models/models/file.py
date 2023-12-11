@@ -56,7 +56,7 @@ class File(models.Model):
 
         super().save(*args, **kwargs)
 
-    def copy(self, new_owner, new_folder=None):
+    def copy(self, new_owner, new_folder=None, new_name=None):
         """
         Create a copy of the file instance.
         The physical file is not duplicated; only the database record is.
@@ -69,7 +69,7 @@ class File(models.Model):
         file_copy = File.objects.create(
             uid=self.uid,
             owner=new_owner,
-            name=self.name,
+            name=new_name or self.name,
             folder=new_folder if new_folder else uploads_folder,
             content=self.content,
             size=self.size,
@@ -79,15 +79,8 @@ class File(models.Model):
         return file_copy
 
     def delete(self):
-        '''Soft delete, just marks file as deleted and moves it to 'Recently deleted' folder of a user'''
+        '''Soft delete, just marks file as deleted'''
         # TODO: make background task to actually delete marked files after 30 days
-
-        recently_deleted_folder, created = Folder.objects.get_or_create(
-            name='Recently deleted',
-            owner=self.owner
-        )
-        self.folder = recently_deleted_folder
-
         self.deleted = True
         self.deleted_at = timezone.now()
         self.save()

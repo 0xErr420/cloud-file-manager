@@ -23,7 +23,6 @@ class Folder(models.Model):
 
 @receiver(post_save, sender=User)
 def create_default_folders(sender, instance, created, **kwargs):
-    ''' Create default folders `Uploads` and `Recently deleted` when new user created. '''
+    ''' Create default folder `Uploads` for each new user. '''
     if created:
-        Folder.objects.create(name='Recently deleted', owner=instance)
         Folder.objects.create(name='Uploads', owner=instance)

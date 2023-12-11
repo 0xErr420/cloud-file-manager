@@ -3,7 +3,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import FileResponse, HttpResponseForbidden
 
 from project_models.models.file import File
-from ..serializers.file_serializers import FileSerializer, FileUploadSerializer, FileCopySerializer, FileRestoreSerializer
+from ..serializers.file_serializers import FileSerializer, FileUploadSerializer, FileCopySerializer, FileRestoreSerializer, RecentlyDeletedFileSerializer
 
 
 class FileListView(generics.ListAPIView):
@@ -62,8 +62,7 @@ def file_content_view(request, file_id):
     except File.DoesNotExist:
         return HttpResponseForbidden("You do not have permission to access this file.")
 
-    # If you want to use this endpoint to trigger downloads (e.g., for documents), set as_attachment=True
-    return FileResponse(open(file.content.path, 'rb'), as_attachment=True)
+    return FileResponse(open(file.content.path, 'rb'), as_attachment=False)
 
 
 def download_file_view(request, file_id):
@@ -98,3 +97,12 @@ class FilePermanentDeleteView(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         instance.marked_for_permanent_deletion = True
         instance.save()
+
+
+class RecentlyDeletedFilesView(generics.ListAPIView):
+    serializer_class = RecentlyDeletedFileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Return files that are marked as soft deleted and belong to the current user
+        return File.objects.filter(owner=self.request.user, deleted=True, marked_for_permanent_deletion=False)

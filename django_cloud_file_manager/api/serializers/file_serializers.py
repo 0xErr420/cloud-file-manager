@@ -29,31 +29,33 @@ class FileUploadSerializer(serializers.ModelSerializer):
 
 class FileCopySerializer(serializers.ModelSerializer):
     folder_id = serializers.IntegerField(write_only=True, required=False)
+    new_name = serializers.CharField(
+        max_length=255, required=False, write_only=True)
 
     class Meta:
         model = File
-        fields = ['id', 'folder_id']
+        fields = ['id', 'folder_id', 'new_name']
 
     def create(self, validated_data):
         # Retrieve the original file using the provided ID
         original_file = File.objects.get(id=validated_data.get('id'))
         folder_id = validated_data.get('folder_id')
+        new_name = validated_data.get('new_name', original_file.name)
 
         # If a folder_id is provided, fetch that folder
         if folder_id:
             new_folder = Folder.objects.get(
                 id=folder_id, owner=self.context['request'].user)
         else:
-            new_folder = Folder.objects.get(
-                name='Uploads', owner=self.context['request'].user)
+            new_folder = original_file.folder
 
         # Check for duplicate filenames in the target folder
-        if File.objects.filter(name=original_file.name, folder=new_folder).exists():
+        if File.objects.filter(name=new_name, folder=new_folder).exists():
             raise serializers.ValidationError(
                 "A file with this name already exists in the specified folder.")
 
         # Call the `copy` method to create a duplicate entry
-        return original_file.copy(new_owner=self.context['request'].user, new_folder=new_folder)
+        return original_file.copy(new_owner=self.context['request'].user, new_folder=new_folder, new_name=new_name)
 
 
 class FileRestoreSerializer(serializers.ModelSerializer):
@@ -65,15 +67,19 @@ class FileRestoreSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         folder_id = validated_data.get('folder_id')
+        # If folder provided, restore it to this folder, else folder stays the same as before
         if folder_id:
             instance.folder = Folder.objects.get(
                 id=folder_id, owner=self.context['request'].user)
-        else:
-            # Default to 'Uploads' folder if not specified
-            instance.folder = Folder.objects.get(
-                name='Uploads', owner=self.context['request'].user)
 
         instance.deleted = False
         instance.deleted_at = None
         instance.save()
         return instance
+
+
+class RecentlyDeletedFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = ['id', 'name', 'date_deleted',
+                  'size', 'folder', 'date_uploaded']
