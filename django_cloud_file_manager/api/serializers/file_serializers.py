@@ -66,15 +66,11 @@ class FileRestoreSerializer(serializers.ModelSerializer):
         fields = ['folder_id']
 
     def update(self, instance, validated_data):
-        folder_id = validated_data.get('folder_id')
-        # If folder provided, restore it to this folder, else folder stays the same as before
-        if folder_id:
-            instance.folder = Folder.objects.get(
-                id=folder_id, owner=self.context['request'].user)
-
-        instance.deleted = False
-        instance.deleted_at = None
-        instance.save()
+        new_folder_id = validated_data.get('folder_id')
+        try:
+            instance.restore(new_folder_id=new_folder_id)
+        except ValueError as e:
+            raise serializers.ValidationError(str(e))
         return instance
 
 

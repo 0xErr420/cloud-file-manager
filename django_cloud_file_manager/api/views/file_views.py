@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, serializers, status
+from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import FileResponse, HttpResponseForbidden
 
@@ -11,17 +12,17 @@ class FileListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Optionally restricts the returned files to a given query,
-        by filtering against a `query` parameter in the URL.
-        """
         queryset = File.active_files.all().filter(owner=self.request.user)
 
+        # Optionally restricts the returned files to a given query, by filtering against a `query` parameter in the URL.
         query = self.request.query_params.get('query')
         if query is not None:
             queryset = queryset.filter(name__icontains=query)
 
         return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class FileDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -86,6 +87,13 @@ class FileRestoreView(generics.UpdateAPIView):
         # Only allow restoring files that belong to the user and are marked as deleted
         return File.objects.filter(owner=self.request.user, deleted=True, marked_for_permanent_deletion=False)
 
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except serializers.ValidationError as e:
+            # Handle the error, such as returning a custom response
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class FilePermanentDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -95,8 +103,7 @@ class FilePermanentDeleteView(generics.DestroyAPIView):
         return File.objects.filter(owner=self.request.user, deleted=True, marked_for_permanent_deletion=False)
 
     def perform_destroy(self, instance):
-        instance.marked_for_permanent_deletion = True
-        instance.save()
+        instance.mark_for_permanent_delete()
 
 
 class RecentlyDeletedFilesView(generics.ListAPIView):

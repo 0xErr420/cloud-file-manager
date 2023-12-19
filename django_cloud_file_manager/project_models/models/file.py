@@ -63,7 +63,8 @@ class File(models.Model):
         """
         uploads_folder, created = Folder.objects.get_or_create(
             name='Uploads',
-            owner=new_owner
+            owner=new_owner,
+            parent_folder__isnull=True
         )
 
         file_copy = File.objects.create(
@@ -83,6 +84,25 @@ class File(models.Model):
         # TODO: make background task to actually delete marked files after 30 days
         self.deleted = True
         self.deleted_at = timezone.now()
+        self.save()
+
+    def restore(self, new_folder_id=None):
+        # If a new folder is provided, validate and use it
+        if new_folder_id:
+            new_folder = Folder.objects.get(
+                id=new_folder_id, owner=self.owner, deleted=False)
+            self.folder = new_folder
+        elif self.folder and (self.folder.deleted or self.folder.marked_for_permanent_deletion):
+            # If the original folder is deleted or does not exist, raise an error
+            raise ValueError(
+                "Original folder is deleted. Please specify a new folder.")
+
+        self.deleted = False
+        self.deleted_at = None
+        self.save()
+
+    def mark_for_permanent_delete(self):
+        self.marked_for_permanent_deletion = True
         self.save()
 
     def hard_delete(self, *args, **kwargs):
