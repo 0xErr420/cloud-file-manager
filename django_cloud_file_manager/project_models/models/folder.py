@@ -3,7 +3,7 @@ from .user import User
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from datetime import timezone
+from django.utils import timezone
 
 
 class ActiveFolderManager(models.Manager):
@@ -50,7 +50,9 @@ class Folder(models.Model):
 
     def restore(self, new_parent_folder_id=None):
         # If a new parent folder is provided, validate and use it
-        if new_parent_folder_id:
+        if new_parent_folder_id is None:
+            self.parent_folder = None
+        elif new_parent_folder_id:
             new_parent_folder = Folder.objects.get(
                 id=new_parent_folder_id, owner=self.owner, deleted=False)
             self.parent_folder = new_parent_folder
@@ -64,12 +66,12 @@ class Folder(models.Model):
         self.save()
 
         # Recursively restore all child folders
-        for child_folder in Folder.objects.filter(parent_folder=self, deleted=True):
-            child_folder.restore()
+        for child_folder in Folder.objects.filter(parent_folder=self, deleted=True, marked_for_permanent_deletion=False):
+            child_folder.restore(new_parent_folder_id=self.id)
 
         # Restore all files in the current folder
         from .file import File
-        for file in File.objects.filter(folder=self, deleted=True):
+        for file in File.objects.filter(folder=self, deleted=True, marked_for_permanent_deletion=False):
             file.restore()
 
     def mark_for_permanent_delete(self):

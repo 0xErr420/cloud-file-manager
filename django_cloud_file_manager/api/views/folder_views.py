@@ -24,6 +24,7 @@ class FolderListView(generics.ListCreateAPIView):
 class FolderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FolderDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
 
     def get_queryset(self):
         # Ensure the user can only access their own folders
@@ -39,6 +40,17 @@ class FolderDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise serializers.ValidationError(
                 "The default 'Uploads' folder cannot be deleted.")
         instance.delete()
+
+
+class ChildFoldersView(generics.ListAPIView):
+    serializer_class = FolderSerializer  # Reuse FolderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Retrieve the parent folder ID from the URL
+        parent_folder_id = self.kwargs.get('id')
+        # Return child folders of the specified parent folder
+        return Folder.active_folders.filter(parent_folder_id=parent_folder_id, owner=self.request.user)
 
 
 class RootFoldersView(generics.ListAPIView):
@@ -71,6 +83,7 @@ class UploadsFolderView(generics.ListAPIView):
 class FolderRestoreView(generics.UpdateAPIView):
     serializer_class = FolderRestoreSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
 
     def get_queryset(self):
         # Only allow restoring folders that belong to the user and are marked as deleted
@@ -86,6 +99,7 @@ class FolderRestoreView(generics.UpdateAPIView):
 
 class FolderPermanentDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
 
     def get_queryset(self):
         # Only allow deletion of folders that belong to the user and are marked as deleted

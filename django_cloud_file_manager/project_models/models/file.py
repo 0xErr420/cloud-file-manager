@@ -5,7 +5,7 @@ from .folder import Folder
 
 import uuid
 import os
-from datetime import timezone
+from django.utils import timezone
 
 
 class ActiveFileManager(models.Manager):
@@ -22,9 +22,9 @@ class File(models.Model):
     objects = models.Manager()  # Default manager
     active_files = ActiveFileManager()  # Custom manager for active files
 
-    class Meta:
-        # File names should be unique in one single folder
-        unique_together = ('owner', 'folder', 'name')
+    # class Meta:
+    #     # File names should be unique in one single folder
+    #     unique_together = ('owner', 'folder', 'name')
 
     # Unique name to store in server filesystem
     uid = models.UUIDField(default=uuid.uuid4, editable=False)

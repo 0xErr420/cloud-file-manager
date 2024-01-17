@@ -16,15 +16,21 @@ class FileSerializer(serializers.ModelSerializer):
 class FileUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = ['name', 'folder', 'content']
+        fields = ('content', 'folder')
 
     def create(self, validated_data):
-        # Set the owner to the user from the request context
-        validated_data['owner'] = self.context['request'].user
-        # Default to 'Uploads' folder if not specified
-        validated_data['folder'] = validated_data.get('folder') or Folder.objects.get(
-            name='Uploads', owner=validated_data['owner'])
-        return super().create(validated_data)
+        # Assuming 'request.user' is available in the serializer context
+        user = self.context['request'].user
+
+        # Set additional fields like 'owner' and 'name' here
+        file_instance = File(
+            owner=user,
+            name=validated_data['content'].name,
+            content=validated_data['content'],
+            folder=validated_data.get('folder')
+        )
+        file_instance.save()
+        return file_instance
 
 
 class FileCopySerializer(serializers.ModelSerializer):

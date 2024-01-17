@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from project_models.models.folder import Folder
+from project_models.models.file import File
 from .file_serializers import FileSerializer
 
 
@@ -16,12 +17,17 @@ class FolderSerializer(serializers.ModelSerializer):
 
 
 class FolderDetailSerializer(serializers.ModelSerializer):
-    files = FileSerializer(many=True, read_only=True)
+    files = serializers.SerializerMethodField()
     child_folders = serializers.SerializerMethodField()
 
     class Meta:
         model = Folder
-        fields = ['id', 'name', 'files', 'child_folders']
+        fields = ['id', 'parent_folder', 'name', 'files', 'child_folders']
+
+    def get_files(self, obj):
+        # Get files in the folder
+        files = File.active_files.filter(folder=obj)
+        return FileSerializer(files, many=True, read_only=True).data
 
     def get_child_folders(self, obj):
         # Get child folders of the folder
@@ -32,7 +38,30 @@ class FolderDetailSerializer(serializers.ModelSerializer):
 class FolderUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Folder
-        fields = ['name', 'parent_folder']
+        fields = ['id', 'parent_folder', 'name']
+
+    # TODO: make a check for folders to not be placed in itself which will cause loops
+    # def validate_parent_folder(self, value):
+    #     # Prevent setting the folder as its own parent
+    #     if self.instance and value == self.instance.id:
+    #         raise serializers.ValidationError(
+    #             "A folder cannot be its own parent.")
+    #     # Prevent creating a loop in the folder structure
+    #     if self.instance and self.is_descendant_of(self.instance, value):
+    #         raise serializers.ValidationError(
+    #             "Invalid parent folder. This would create a loop.")
+    #     return value
+
+    # def is_descendant_of(self, current_folder, parent_folder_id):
+    #     """ Recursively checks if the current folder is a descendant of a given folder. """
+    #     if not parent_folder_id:
+    #         return False
+    #     parent_folder = Folder.objects.get(id=parent_folder_id)
+    #     while parent_folder:
+    #         if parent_folder == current_folder:
+    #             return True
+    #         parent_folder = parent_folder.parent_folder
+    #     return False
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
@@ -56,17 +85,17 @@ class UploadsFolderDetailSerializer(serializers.Serializer):
 
 
 class FolderRestoreSerializer(serializers.ModelSerializer):
-    new_parent_folder_id = serializers.IntegerField(
-        write_only=True, required=False)
+    new_parent_folder = serializers.IntegerField(
+        write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = Folder
-        fields = ['new_parent_folder_id']
+        fields = ['new_parent_folder']
 
     def update(self, instance, validated_data):
-        new_parent_folder_id = validated_data.get('new_parent_folder_id')
+        new_parent_folder = validated_data.get('new_parent_folder')
         try:
-            instance.restore(new_parent_folder_id=new_parent_folder_id)
+            instance.restore(new_parent_folder_id=new_parent_folder)
         except ValueError as e:
             raise serializers.ValidationError(str(e))
         return instance

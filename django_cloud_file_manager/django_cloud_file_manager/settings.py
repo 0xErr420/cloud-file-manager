@@ -41,17 +41,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # External Dependencies
     "rest_framework",
+    'corsheaders',
+    'sslserver',
     # Own modules
     "project_models",
     "api",
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Custom jwt auth middleware
+    'django_cloud_file_manager.jwt_authentication_middleware.JWTAuthenticationMiddleware',
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -63,9 +69,21 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_COOKIE_SECURE': True,  # TODO: https, set this to True in production
+    'AUTH_COOKIE_HTTP_ONLY': True,  # Http only cookie flag.
+    'AUTH_COOKIE_PATH': '/',        # The path of the auth cookie.
+    'AUTH_COOKIE_SAMESITE': 'None',  # SameSite setting for the cookie
 }
+
+# CORs settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'django_cloud_file_manager.urls'
 
