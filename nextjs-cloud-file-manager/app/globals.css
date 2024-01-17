@@ -18,10 +18,43 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }
+
+/* In your global CSS file */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.icon-style {
+  @apply h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400;
+}
+
+.button-style {
+  @apply flex items-center hover:bg-white dark:hover:bg-black rounded text-gray-700 dark:text-gray-300 px-1.5 py-1 text-sm;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.button-border {
+  @apply border border-gray-200 dark:border-gray-700;
+}
+
+.x-scroll {
+  @apply overflow-hidden overflow-x-auto scrollbar-hide;
+}
+
+.main-content {
+  height: calc(100vh - 3.5rem - 2.75rem - 2.5rem);
+}
+
+/* * { */
+/* Don't forget to remove this after debugging */
+/* outline: 1px solid red; 
+} */
