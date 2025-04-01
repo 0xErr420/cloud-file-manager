@@ -21,6 +21,7 @@ I built this project to:
 
 ✅ **Secure Authentication** – JWT with HTTP-only cookies to prevent XSS attacks.  
 ✅ **File Upload & Management** – Upload, delete (soft & hard), and organize files easily.  
+✅ **Drag & Drop File Upload** – Easily upload files by dragging them into the interface for a seamless user experience.  
 ✅ **Error Handling & API Optimization** – Automatic retries, request throttling, and token refresh.  
 ✅ **Light/Dark Mode** – User-preferred theme switching.  
 ✅ **Optimized File Storage** – Smart upload, deduplication, and secure file access.  
