@@ -2,7 +2,7 @@
 
 A **full-stack web application** that allows users to **securely upload, manage, and organize files** via an intuitive and responsive interface.  
 
-![app_main_view_tiles]()  
+![app_main_view_tiles](attachments/CloudFileManager_app_main_view_tiles.png)  
 
 ---
 
@@ -42,8 +42,8 @@ I built this project to:
 
 ## 📸 **Screenshots**  
 
-![app_main_view_list]()  
-![app_upload_view]()  
-![app_main_view_tiles_dark_mode]()  
-![app_main_view_error_cues]()  
-![app_upload_view_error_cues]()  
+![app_main_view_list](attachments/CloudFileManager_app_main_view_list.png)  
+![app_upload_view](attachments/CloudFileManager_app_upload_view.png)  
+![app_main_view_tiles_dark_mode](attachments/CloudFileManager_app_main_view_tiles_dark_mode.png)  
+![app_main_view_error_cues](attachments/CloudFileManager_app_main_view_error_cues.png)  
+![app_upload_view_error_cues](attachments/CloudFileManager_app_upload_view_error_cues.png)  
